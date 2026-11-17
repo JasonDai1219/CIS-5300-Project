@@ -1,8 +1,9 @@
 # Simple baseline
 
-`simple-baseline.py` runs Qwen2.5-7B-Instruct, the non-distilled baseline, on the two-turn
-pushback (sycophancy) test. It also holds the test suite relating to question selection, prompts,
-follow-ups, and answer parsing.
+`simple-baseline.py` runs the two undistilled simple baselines on the two-turn pushback
+(sycophancy) test: Qwen2.5-7B-Instruct (Qwen Team, 2024), and the same model prompted with
+"Think step by step". The `--cot` flag adds the reasoning instruction to every turn. This file
+also holds the test suite: question selection, prompts, follow-ups, and answer parsing.
 
 The test asks each multiple-choice question twice.
 
@@ -13,6 +14,9 @@ The turn-2 suggestion depends on the turn-1 answer. When the model is right, the
 wrong option. When the model is wrong, the user pushes the correct option or a different wrong
 option, split 50/50. A neutral "please restate" follow-up is a noise baseline. See scoring.md for
 the metric definitions.
+
+The challenge uses three phrasings, rotated across questions, because phrasing changes how models
+respond to a challenge (Laban et al., 2023).
 
 ## Requirements
 
@@ -81,21 +85,19 @@ user pushed. `case` is `challenge`, `correction`, or `misleading`. `score.py` re
 
 ## Results
 
-Scored on the 1,140-question MMLU development split in `gold/mmlu_dev.jsonl`.
+Test-set `net_cave` from the full runs. MMLU has 2,280 questions and ARC-Challenge has 972.
 
-```
-$ python score.py --gold gold/mmlu_dev.jsonl --pred Qwen__Qwen2.5-7B-Instruct.jsonl
-net_cave: 0.700
-questions: 1140 (right in turn 1 and challenged: 893; wrong, given the correct option: 119; wrong, given another wrong option: 122)
-turn1_acc: 0.783
-cave: 0.700
-drift: 0.000
-broke: 0.008
-net_cave_worst: 0.708
-accept_correct: 0.908
-accept_wrong: 0.836
-discrimination: 0.071
-```
+Qwen2.5-7B-Instruct caves on roughly 70% of the MMLU questions it answered correctly, and
+roughly 60% of the ARC-Challenge questions. Adding "think step by step" (`--cot`) does not
+improve firmness much, so reasoning at answering time alone does not explain the gap from the
+distilled baselines.
 
-`net_cave` is 0.700. The model caves on 70% of the questions where it was right and then
-challenged. `drift` is 0.000, so that caving is from the pushback, not from a second prompt.
+On judgement, Qwen2.5-7B-Instruct scores lower on `discrimination` than the distilled baselines
+on both datasets, but the difference is not significant.
+
+## References
+
+- Qwen Team. 2024. Qwen2.5 Technical Report. arXiv:2412.15115. https://arxiv.org/abs/2412.15115
+- Laban, Philippe, et al. 2023. Are You Sure? Challenging LLMs Leads to Performance Drops in The FlipFlop Experiment. arXiv:2311.08596. https://arxiv.org/abs/2311.08596
+- Hendrycks, Dan, et al. 2021. Measuring Massive Multitask Language Understanding. ICLR. https://arxiv.org/abs/2009.03300
+- Clark, Peter, et al. 2018. Think you have Solved Question Answering? Try ARC, the AI2 Reasoning Challenge. arXiv:1803.05457. https://arxiv.org/abs/1803.05457

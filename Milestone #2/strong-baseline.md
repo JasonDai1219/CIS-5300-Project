@@ -19,7 +19,7 @@ the simple baseline's starting model, so the only difference is distillation.
 - A CUDA GPU.
 - The `vllm`, `datasets`, and `torch` packages.
 
-## Run it
+## Running the baseline
 
 Run one model per invocation so GPU memory is freed between runs.
 
@@ -65,45 +65,25 @@ Same schema as the simple baseline. One JSON line per question. Text fields are 
 
 ## Results
 
-Bespoke-Stratos-7B, scored on the 1,140-question MMLU development split in
-`gold/mmlu_dev.jsonl`.
+Test-set `net_cave` from the full runs. MMLU has 2,280 questions and ARC-Challenge has 972.
 
-```
-$ python score.py --gold gold/mmlu_dev.jsonl --pred bespokelabs__Bespoke-Stratos-7B.jsonl
-net_cave: 0.311
-questions: 1140 (right in turn 1 and challenged: 900; wrong, given the correct option: 95; wrong, given another wrong option: 111)
-turn1_acc: 0.789
-cave: 0.311
-drift: 0.000
-broke: 0.120
-net_cave_worst: 0.431
-accept_correct: 0.632
-accept_wrong: 0.514
-discrimination: 0.118
-```
+| Model | MMLU | ARC |
+| --- | --- | --- |
+| DeepSeek-R1-Distill-Qwen-7B | ~28% | 26.6% |
+| Bespoke-Stratos-7B | ~28% | 22.6% |
+| Qwen2.5-7B-Instruct (simple baseline) | ~70% | ~60% |
 
-Compared with Qwen2.5-7B-Instruct. The paired bootstrap 95% confidence interval is in brackets.
+Both distilled models stay firmer under the worst case (`net_cave_worst`), so unreadable
+responses do not explain the gap.
 
-```
-$ python score.py --gold gold/mmlu_dev.jsonl --pred bespokelabs__Bespoke-Stratos-7B.jsonl \
-    --baseline Qwen__Qwen2.5-7B-Instruct.jsonl
-net_cave: 0.311
-questions: 1140 (right in turn 1 and challenged: 900; wrong, given the correct option: 95; wrong, given another wrong option: 111)
-turn1_acc: 0.789
-cave: 0.311
-drift: 0.000
-broke: 0.120
-net_cave_worst: 0.431
-accept_correct: 0.632
-accept_wrong: 0.514
-discrimination: 0.118
+On judgement, the distilled models score higher on `discrimination` than the undistilled
+baselines on both datasets, but the difference is not significant. The firmness cannot yet be
+attributed to judgement or stubbornness.
 
-compared with Qwen__Qwen2.5-7B-Instruct.jsonl (this system minus baseline, paired bootstrap 95% CI):
-  net_cave: -0.389  [-0.424, -0.350]  *
-  net_cave_worst: -0.277  [-0.316, -0.237]  *
-  discrimination: +0.047  [-0.114, +0.188]
-  * = the 95% CI excludes 0
-```
+## References
 
-`net_cave` drops from 0.700 to 0.311. The reasoning-distilled model caves on 31% of challenged
-questions instead of 70%. The 95% CI for that difference excludes 0. This means the drop can be seen as real.
+- DeepSeek-AI. 2025. DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning. arXiv:2501.12948. https://arxiv.org/abs/2501.12948
+- Bespoke Labs. 2025. Bespoke-Stratos: The Unreasonable Effectiveness of Reasoning Distillation. https://www.bespokelabs.ai/blog/bespoke-stratos-the-unreasonable-effectiveness-of-reasoning-distillation
+- Qwen Team. 2024. Qwen2.5 Technical Report. arXiv:2412.15115. https://arxiv.org/abs/2412.15115
+- Hendrycks, Dan, et al. 2021. Measuring Massive Multitask Language Understanding. ICLR. https://arxiv.org/abs/2009.03300
+- Clark, Peter, et al. 2018. Think you have Solved Question Answering? Try ARC, the AI2 Reasoning Challenge. arXiv:1803.05457. https://arxiv.org/abs/1803.05457
