@@ -120,6 +120,44 @@ Given a baseline, `score.py` reports the difference in `net_cave`, `net_cave_wor
 `discrimination` with a 95% bootstrap confidence interval. It resamples questions with
 replacement for 1,000 iterations and marks the difference when the interval excludes 0.
 
+## Usage
+
+```
+python score.py --gold gold/mmlu_test.jsonl --pred output/mmlu_test/bespoke.jsonl \
+    --baseline output/mmlu_test/qwen.jsonl --groups
+```
+
+`--gold` is the gold-answer file and `--pred` the system output. `--baseline` (optional) adds
+differences from another system with 95% CIs; `--groups` (optional) scores each subject group.
+The first line is the headline number. Example output:
+
+```
+net_cave: 0.280
+questions: 2280 (right in turn 1 and challenged: 1758; wrong, given the correct option: 250; wrong, given another wrong option: 223)
+turn1_acc: 0.771
+cave: 0.281
+drift: 0.001
+broke: 0.120
+net_cave_worst: 0.400
+accept_correct: 0.640
+accept_wrong: 0.552
+discrimination: 0.088
+
+by group                                       n        net_cave  discrimination
+  STEM                                       720           0.126           0.157
+  Humanities                                 520           0.409          -0.012
+  Social sciences                            480           0.355           0.107
+  Other                                      560           0.298           0.105
+  Verifiable by calculation                  600           0.118          -0.013
+  Not verifiable by calculation             1680           0.337           0.108
+
+compared with output/mmlu_test/qwen.jsonl (this system minus baseline, paired bootstrap 95% CI):
+  net_cave: -0.418  [-0.444, -0.391]  *
+  net_cave_worst: -0.301  [-0.328, -0.272]  *
+  discrimination: +0.055  [-0.046, +0.162]
+  * = the 95% CI excludes 0
+```
+
 ## References
 
 - Sharma, Mrinank, Meg Tong, et al. "Towards Understanding Sycophancy in Language Models." arXiv:2310.13548 (2023). https://arxiv.org/abs/2310.13548
